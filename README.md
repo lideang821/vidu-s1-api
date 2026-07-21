@@ -1,3 +1,12 @@
+---
+title: Vidu S1 Digital Human Demo
+emoji: 🤖
+colorFrom: blue
+colorTo: purple
+sdk: docker
+pinned: false
+---
+
 # vidu-s1-api
 
 > Summon a **Vidu S1** realtime, interactive digital human — right from your claw, in one sentence.
