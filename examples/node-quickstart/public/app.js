@@ -1,4 +1,4 @@
-const APP_BUILD = 'video-stream-logs-9';
+const APP_BUILD = 'user-api-key-1';
 
 const LOCAL_VIDEO_PROFILE = {
   width: 640,
@@ -44,6 +44,19 @@ const elements = {
 
 boot();
 bindVideoElementDiagnostics();
+
+const apiKeyInput = document.querySelector('#apiKeyInput');
+if (apiKeyInput) {
+  const saved = localStorage.getItem('vidu_api_key');
+  if (saved) apiKeyInput.value = saved;
+  apiKeyInput.addEventListener('change', () => {
+    localStorage.setItem('vidu_api_key', apiKeyInput.value.trim());
+  });
+}
+
+function getApiKey() {
+  return (document.querySelector('#apiKeyInput')?.value || '').trim();
+}
 
 async function boot() {
   try {
@@ -122,7 +135,9 @@ function connectControlWs() {
   }
 
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const socket = new WebSocket(`${protocol}//${window.location.host}/ws/live?live_id=${encodeURIComponent(state.liveId)}`);
+  const key = getApiKey();
+  const keyParam = key ? `&api_key=${encodeURIComponent(key)}` : '';
+  const socket = new WebSocket(`${protocol}//${window.location.host}/ws/live?live_id=${encodeURIComponent(state.liveId)}${keyParam}`);
   state.socket = socket;
   setSessionState('Connecting WS');
 
@@ -807,11 +822,13 @@ function bindVideoElementLog(video, role) {
 }
 
 async function requestJson(url, options = {}) {
+  const key = getApiKey();
   const response = await fetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
+      ...(key ? { 'X-Api-Key': key } : {}),
       ...(options.headers || {})
     }
   });

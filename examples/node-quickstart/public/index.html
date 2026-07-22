@@ -24,6 +24,15 @@
           </div>
 
           <label>
+            Vidu API Key
+            <input id="apiKeyInput" name="api_key_ui" type="password" placeholder="vda_xxxxxxxxxxxxxxxx" autocomplete="off">
+          </label>
+          <p style="font-size:0.8em;margin:-6px 0 10px;color:#888">
+            从 <a href="https://platform.vidu.cn/api-keys" target="_blank">platform.vidu.cn</a>
+            或 <a href="https://platform.vidu.com/api-keys" target="_blank">platform.vidu.com</a> 获取
+          </p>
+
+          <label>
             Mode
             <select name="call_mode">
               <option value="video">Video</option>
@@ -81,6 +90,6 @@
     </main>
 
     <script src="https://g.alicdn.com/apsara-media-box/imp-web-rtc/7.1.9/aliyun-rtc-sdk.js"></script>
-    <script src="/app.js?v=video-stream-logs-9" type="module"></script>
+    <script src="/app.js?v=user-api-key-1" type="module"></script>
   </body>
 </html>

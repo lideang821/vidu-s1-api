@@ -60,7 +60,8 @@ wss.on('connection', (client, request, url) => {
     return;
   }
 
-  const proxy = new LiveControlProxy(client, liveId);
+  const apiKey = normalizeApiKey(url.searchParams.get('api_key') || '');
+  const proxy = new LiveControlProxy(client, liveId, apiKey);
   proxy.start();
 });
 
@@ -87,13 +88,14 @@ async function handleRequest(request, response) {
   }
 
   if (request.method === 'POST' && url.pathname === '/api/lives') {
-    authorizationHeader();
+    const userKey = apiKeyFromRequest(request);
+    if (!userKey) { authorizationHeader(); }
     const body = await readJsonBody(request);
     const payload = buildCreateLivePayload(body);
     const data = await viduFetch('/live/v1/lives', {
       method: 'POST',
       body: JSON.stringify(payload)
-    });
+    }, userKey);
 
     sendJson(response, 200, data);
     return;
@@ -102,7 +104,8 @@ async function handleRequest(request, response) {
   const liveMatch = url.pathname.match(/^\/api\/lives\/([^/]+)$/);
   if (request.method === 'GET' && liveMatch) {
     const liveId = decodeURIComponent(liveMatch[1]);
-    const data = await viduFetch(`/live/v1/lives/${encodeURIComponent(liveId)}`);
+    const userKey = apiKeyFromRequest(request);
+    const data = await viduFetch(`/live/v1/lives/${encodeURIComponent(liveId)}`, {}, userKey);
     sendJson(response, 200, data);
     return;
   }
@@ -164,11 +167,12 @@ function defaultLivePayload() {
   };
 }
 
-async function viduFetch(route, options = {}) {
+async function viduFetch(route, options = {}, apiKey = null) {
+  const auth = apiKey || authorizationHeader();
   const response = await fetch(`${HTTP_ORIGIN}${route}`, {
     ...options,
     headers: {
-      Authorization: authorizationHeader(),
+      Authorization: auth,
       'Content-Type': 'application/json',
       Accept: 'application/json',
       ...(options.headers || {})
@@ -189,9 +193,10 @@ async function viduFetch(route, options = {}) {
 }
 
 class LiveControlProxy {
-  constructor(client, liveId) {
+  constructor(client, liveId, apiKey = null) {
     this.client = client;
     this.liveId = liveId;
+    this.apiKey = apiKey;
     this.remote = null;
     this.seqId = 1;
     this.connectAttempt = 0;
@@ -222,7 +227,7 @@ class LiveControlProxy {
 
     let auth;
     try {
-      auth = authorizationHeader();
+      auth = this.apiKey || authorizationHeader();
     } catch (error) {
       this.sendClient({ event: 'error', message: error.message });
       this.shutdown({ closeClient: true });
@@ -531,6 +536,18 @@ function authorizationHeader() {
   }
 
   throw httpError(500, 'VIDU_API_KEY must look like "Token vda_xxx".');
+}
+
+function normalizeApiKey(raw = '') {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith('Token ')) return trimmed;
+  if (trimmed.startsWith('vda_')) return `Token ${trimmed}`;
+  return null;
+}
+
+function apiKeyFromRequest(request) {
+  return normalizeApiKey(request.headers['x-api-key'] || '');
 }
 
 function readApiKey() {
