@@ -1,6 +1,6 @@
 :root {
   color-scheme: light;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "Avenir Next", "PingFang SC", sans-serif;
   background: #f6f7f4;
   color: #17201b;
 }
@@ -51,6 +51,32 @@ button:disabled {
   border-color: #a43f2f;
   background: #a43f2f;
 }
+
+.danger { border-color: #a43f2f; color: #a43f2f; }
+[hidden] { display: none !important; }
+a { color: #1f6f50; text-underline-offset: 4px; }
+fieldset { display: grid; gap: 14px; border: 0; padding: 0; margin: 0; min-width: 0; }
+.toolbar, .session-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; }
+.toolbar select { width: auto; }
+.session-bar { margin-bottom: 18px; }
+.control-column { display: grid; gap: 18px; }
+.control-column, .panel, input, select, textarea { min-width: 0; }
+.checkbox { display: flex; align-items: center; }
+.checkbox input { width: auto; }
+.image-input { display: grid; gap: 10px; }
+.image-preview { width: 100%; max-height: 180px; object-fit: contain; border-radius: 6px; }
+.sample-hint { margin: 0; }
+.notice { padding: 12px 16px; border-left: 3px solid #1f6f50; background: #e7f6ec; overflow-wrap: anywhere; }
+.intro { margin: 32px 0; font-size: 20px; color: #4d584d; }
+.hint { color: #6d7569; font-size: 13px; line-height: 1.6; }
+.entry-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.entry { display: block; padding: 32px; text-decoration: none; color: inherit; }
+.entry:hover { border-color: #1f6f50; }
+.entry h2 { margin-top: 24px; font-size: 28px; }
+.entry p { line-height: 1.7; color: #4d584d; }
+.entry-link { display: block; margin-top: 28px; color: #1f6f50; font-weight: 700; }
+.log-head { margin: 22px 0 8px; }
+.log-head h3 { margin: 0; }
 
 .primary:disabled {
   opacity: 0.8;
@@ -180,7 +206,7 @@ textarea {
 
 .media-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(120px, 160px);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 18px;
 }
@@ -193,14 +219,14 @@ textarea {
   border: 1px solid #d9ded3;
   border-radius: 8px;
   background: #101714;
-  aspect-ratio: 9 / 16;
+  aspect-ratio: 3 / 4;
 }
 
 .media-tile video {
   width: 100%;
   height: 100%;
   background: #101714;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .media-tile figcaption {
@@ -253,9 +279,10 @@ pre {
   }
 
   .workspace,
+  .entry-grid,
   .media-grid,
   .field-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .shell {

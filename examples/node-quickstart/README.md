@@ -1,101 +1,64 @@
-# Vidu S1 Node Quickstart
+# Vidu S2 Node Quickstart
 
-This example is a small Node service that creates Vidu S1 live sessions and
-proxies the control WebSocket. It keeps `VIDU_API_KEY` on the server, because the
-Vidu WebSocket requires an `Authorization: Token vda_xxx` header and the raw API
-key must not be shipped to browsers.
-
-The browser page loads Aliyun ARTC Web SDK from CDN, creates a live session,
-joins the returned RTC channel, publishes the user's microphone and camera, then
-opens the Vidu control WebSocket and subscribes to the digital-human stream.
-Media still flows directly through Aliyun RTC; the Node service only owns Vidu
-HTTP requests and the control WebSocket proxy.
-
-This Vidu flow does not configure Aliyun ARTC `AppKey` in the browser. Vidu
-returns the per-session `rtc.app_id` and `rtc.token`; the page first joins ARTC
-with that returned token. The generic Aliyun ARTC quick-use guide needs AppKey
-only when your own server generates ARTC tokens directly.
+A Node service with two browser pages: **Avatar** for interactive characters and **Editing** for real-time video editing. The service keeps your API key on the server and proxies HTTP requests and the control WebSocket. Audio/video flows through Aliyun RTC.
 
 ## Run
 
+Requires Node.js 20+, Chrome or Edge, and a microphone. Video mode also requires a camera.
+
+From this directory:
+
 ```bash
 cp ../../.env.example ../../.env
+# Edit ../../.env to set VIDU_API_KEY and VIDU_HOST.
 npm install
-```
-
-Edit `../../.env` with a real API key and avatar image before starting the
-server. `VIDU_API_KEY` may be either `vda_xxx` or `Token vda_xxx`; the server
-normalizes it before calling Vidu.
-
-```bash
 npm run dev
 ```
 
-Then open http://localhost:8787. Set `NODE_QUICKSTART_PORT` in `.env` if you
-need another local port.
+Use `api.vidu.com` for Global or `api.vidu.cn` for China, with an API key from the same region. Open **http://localhost:8787**, choose a page, and allow microphone/camera access when prompted. Click **Hang up** when you're done.
 
-Required environment:
+## Avatar
 
-- `VIDU_API_KEY`: Vidu API key. Both `vda_xxx` and `Token vda_xxx` are accepted.
-- `VIDU_HOST`: `api.vidu.cn` or `api.vidu.com`.
-- `VIDU_AVATAR_IMAGE_URI`: public single-person avatar image URL or base64 data URI.
-- `VIDU_AVATAR_PERSONA`: persona text for the digital human.
-- `VIDU_AVATAR_NAME`: optional display/name hint for the avatar.
-- `VIDU_AVATAR_VOICE`: optional voice name. Defaults to `Tina` in this example.
+Open `/avatar`, configure the character image, persona, and voice, then choose audio or video mode and click **Create and connect**. Talk through your microphone or send text instructions. Video mode also supports **Optimize persona prompt**.
 
-The page depends on this official ARTC SDK script:
+## Editing
 
-```html
-<script src="https://g.alicdn.com/apsara-media-box/imp-web-rtc/7.1.9/aliyun-rtc-sdk.js"></script>
+Open `/editing`, choose style transfer, virtual try-on, subject replacement, or background replacement, and select a reference image. Click **Create and connect** to compare the camera feed with the edited result.
+
+You can enter an image URL or upload a local image up to **4 MB**. During a session, use **Apply change** to update the image or scenario, or **Keep current image** to reuse the active reference.
+
+## Configuration
+
+Process environment variables take priority. The service reads the repository root `.env` first, then fills in unset variables from this directory's `.env`.
+
+| Variable | Purpose |
+|---|---|
+| `VIDU_API_KEY` | Required; accepts `vda_xxx` or `Token vda_xxx` |
+| `VIDU_HOST` | `api.vidu.cn` (default) or `api.vidu.com` |
+| `NODE_QUICKSTART_PORT` | Local port; defaults to `8787` |
+| `VIDU_CALL_MODE` | Avatar mode: `video` (default) or `audio` |
+| `VIDU_AVATAR_IMAGE_URI` | Character image URL or base64 data URI |
+| `VIDU_AVATAR_PERSONA` | Character persona |
+| `VIDU_AVATAR_NAME` / `VIDU_AVATAR_VOICE` | Optional name and voice; each falls back to `Tina` when unset |
+| `VIDU_EDITING_IMAGE_URL` | Optional default reference image URL |
+| `VIDU_EDITING_TYPE` | `style_transfer` (default), `virtual_tryon`, `subject_replacement`, or `background_replacement` |
+
+## Connection notes
+
+- Sessions use `POST /live/s_avatar/realtime` or `POST /live/s_editing/realtime`. The control WebSocket is proxied through Node.
+- Avatar video mode and Editing wait for control initialization before joining RTC. Avatar audio mode can join while initialization is in progress.
+- Vidu supplies the RTC credentials; no Aliyun AppKey configuration is needed.
+- Editing changes take a few seconds. Success has no application-level acknowledgement; failures appear in the event log.
+- The service listens only on the local loopback interface. Restarting Node requires a new session.
+
+For capture or playback issues, check browser permissions, device availability, access to the [Aliyun ARTC SDK](https://g.alicdn.com/apsara-media-box/imp-web-rtc/7.1.9/aliyun-rtc-sdk.js), and the page's event log.
+
+## Checks
+
+```bash
+npm test
 ```
 
-Click **Start live call** from a browser tab opened by a user gesture. The page
-joins RTC, requests microphone/camera permission, connects the Vidu control
-WebSocket, and renders the digital-human stream.
+Tests use a local mock upstream without creating billable sessions. Real audio/video testing requires a valid API key and working devices.
 
-## Endpoints
-
-- `GET /api/config`: returns non-secret defaults for the browser form.
-- `POST /api/lives`: creates a live session through `POST /live/v1/lives`.
-- `GET /api/lives/:live_id`: queries session status and billing through
-  `GET /live/v1/lives/{live_id}`.
-- `WS /ws/live?live_id=...`: server-side proxy to
-  `wss://{host}/live/ws/live/connect?live_id=...`.
-
-## Protocol Notes
-
-- The browser opens `/ws/live` after RTC join and local publish. The proxy sends
-  `conn_init` as soon as Vidu's WebSocket opens.
-- `NOT_READY` is treated as a warm-up state in video mode. The proxy closes the
-  remote socket and reconnects with 2s, 4s, then 8s backoff.
-- `LIVE_CONN_INIT_FAILED` is fatal for that live session. Create a new live.
-- Server hangup messages (`type: 6`) and abnormal remote closes terminate the
-  browser session and are surfaced in the event log.
-- `hangup` sends WebSocket message `type: 5` with `hangup_reason: "user_end"`.
-
-## RTC Integration
-
-The page also prints the `rtc` credentials for debugging. Its RTC flow is:
-
-- Create the live session through the Node service.
-- Join with `rtc.app_id`, `rtc.channel_id`, `rtc.user_id`, and `rtc.token`.
-- Publish the user's microphone. Publish camera only for `video` mode.
-- Open the Vidu control WebSocket after the local RTC publish step.
-- Configure local camera capture as 640x360, `maxSendFrameRate: 15`, and
-  `bitrate: 800`.
-- Subscribe to the digital-human stream whose user id follows
-  `live-bot-{creatorID}-{liveID}` or `live-video-push-*`. The browser disables
-  SDK auto-subscribe and deduplicates manual subscription attempts for that
-  selected media user.
-- Ignore late RTC events from old sessions using a per-session guard.
-- Treat the RTC token as session-scoped. Read `live.live_duration` and
-  `rtc.token_expire_at` from each create response instead of assuming a fixed
-  duration; create fresh credentials for every session.
-
-## Debugging
-
-The browser event log is intentionally verbose enough for integration debugging.
-Use it to distinguish local capture/publish issues from remote subscription or
-video-element playback issues. RTC credentials are also printed on the page for
-session-level inspection, with token length shown instead of the full token in
-log events.
+See the [Global API docs](https://platform.vidu.com/vidu-stream/doc), [China API docs](https://platform.vidu.cn/vidu-stream/doc), or the [integration skill](../../skills/vidu-s-api/SKILL.md) for protocol details.

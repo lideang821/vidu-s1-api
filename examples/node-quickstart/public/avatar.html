@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vidu S2-Avatar · Vidu S2</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body data-demo="avatar">
+<main class="shell">
+  <header class="topbar">
+    <div><a class="eyebrow" href="/">Vidu S API / Node quickstart</a><h1>Vidu S2-Avatar</h1></div>
+    <div class="toolbar"><a href="/avatar">Avatar</a><a href="/editing">Editing</a>
+      <select id="language" aria-label="Language"><option value="en">English</option><option value="zh">中文</option></select>
+    </div>
+  </header>
+  <div class="session-bar"><span class="status-pill" id="apiKeyState" data-i18n="checking">Checking config</span><span id="hostLabel"></span><span class="status-pill" id="sessionState" data-i18n="idle">Idle</span></div>
+  <p id="notice" role="status" class="notice" hidden></p>
+  <section class="workspace">
+    <div class="control-column">
+      <form class="panel form-panel" id="createForm"><h2 data-i18n="createSession">Create session</h2>
+        <fieldset id="createFields"><label><span data-i18n="callMode">Call mode</span><select name="call_mode"><option value="video" data-i18n="videoMode">Video</option><option value="audio" data-i18n="audioMode">Audio</option></select></label>
+      <label>character_id<input name="character_id" type="text" inputmode="numeric" pattern="[0-9]+" value="1" required></label>
+      <label><span data-i18n="avatarImage">Avatar image URI</span><input name="image_uri" type="text" placeholder="https://example.com/avatar.png" required></label>
+      <label><span data-i18n="persona">Persona</span><textarea name="persona" rows="4" maxlength="50000" required></textarea></label>
+      <div class="field-grid"><label><span data-i18n="name">Name</span><input name="name" type="text" maxlength="20"></label><label><span data-i18n="voice">Voice</span><input name="voice" type="text" placeholder="Tina"></label></div>
+      <label class="checkbox"><input name="persona_enhance" type="checkbox"><span data-i18n="enhance">Optimize persona prompt (video only)</span></label><button class="primary" id="startButton" type="submit" disabled data-i18n="start">Create and connect</button></fieldset>
+        <button class="danger" id="hangupButton" type="button" disabled data-i18n="hangup">Hang up</button>
+      </form>
+      <form id="interactionForm" class="panel form-panel"><h2 data-i18n="textTitle">Text instructions</h2>
+      <fieldset id="interactionFields" disabled><label><span data-i18n="message">Message</span><textarea id="textInput" rows="3" required></textarea></label><button class="primary" type="submit" data-i18n="sendText">Send text</button></fieldset></form>
+    </div>
+    <section class="panel session-panel">
+      <div class="media-grid">
+        <figure class="media-tile"><video id="localVideo" autoplay playsinline muted></video><figcaption data-i18n="localPreview">Local preview</figcaption></figure>
+        <figure class="media-tile"><video id="remoteVideo" autoplay playsinline controls ></video><figcaption data-i18n="digitalCharacter">Digital character</figcaption></figure>
+      </div>
+      <h3 data-i18n="sessionDetails">Session / RTC details</h3><pre id="sessionOutput">{}</pre>
+      <div class="panel-head log-head"><h3 data-i18n="eventLog">Event log</h3><button id="clearLog" type="button" data-i18n="clearLog">Clear log</button></div><ul id="eventLog" class="event-log" aria-live="polite"></ul>
+    </section>
+  </section>
+</main>
+<script src="/i18n.js" type="module"></script>
+<script src="https://g.alicdn.com/apsara-media-box/imp-web-rtc/7.1.9/aliyun-rtc-sdk.js"></script>
+<script src="/app.js" type="module"></script>
+</body>
+</html>
